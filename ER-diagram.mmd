@@ -1,0 +1,30 @@
+erDiagram
+    USERS {
+        INTEGER id PK "ID"
+        TEXT name "Name"
+        TEXT email "Unique email"
+        TEXT password "Encrypted password"
+        TEXT created_at "Creation date"
+    }
+    ACCESS_TOKENS {
+        INTEGER id PK "ID"
+        INTEGER user_id FK "User"
+        TEXT token "Hashed access token"
+        TEXT expires_at "Expiration date"
+        TEXT revoked_at "Logout date"
+        TEXT created_at "Creation date"
+    }
+    NOTES {
+        INTEGER id PK "ID"
+        TEXT title "Title"
+        TEXT author "Author"
+        TEXT created_at "Date and time"
+        TEXT body "Body of the note"
+        INTEGER category_id FK "Classification"
+    }
+    CATEGORIES {
+        INTEGER id PK "ID"
+        TEXT name "Classification name"
+    }
+    CATEGORIES ||--o{ NOTES : classifies
+    USERS ||--o{ ACCESS_TOKENS : owns

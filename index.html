@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Notes API CRUD</title>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+    <div id="app" class="app-shell">
+        <header class="topbar">
+            <div>
+                <h1>Notes API CRUD</h1>
+                <p class="subtitle">REST API for personal notes with token login.</p>
+            </div>
+            <code class="api-pill">{{ apiBase }}</code>
+        </header>
+
+        <section class="auth-grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">API authentication</h2>
+                </div>
+                <form class="form-grid" @submit.prevent="authMode === 'signup' ? signUp() : login()">
+                    <div class="actions">
+                        <button class="btn secondary" type="button" @click="authMode = 'signup'">Register</button>
+                        <button class="btn secondary" type="button" @click="authMode = 'login'">Login</button>
+                    </div>
+
+                    <label v-if="authMode === 'signup'">
+                        Name
+                        <input v-model.trim="authForm.name" maxlength="100" placeholder="Universidad Tecmilenio">
+                    </label>
+                    <label>
+                        Email
+                        <input v-model.trim="authForm.email" type="email" required placeholder="hello@tecmilenio.mx">
+                    </label>
+                    <label>
+                        Password
+                        <input v-model="authForm.password" type="password" required minlength="8" placeholder="12345678">
+                    </label>
+                    <label v-if="authMode === 'login'" class="inline-field">
+                        <input v-model="authForm.remember_me" type="checkbox">
+                        Remember me
+                    </label>
+
+                    <div class="actions">
+                        <button class="btn" type="submit">{{ authMode === 'signup' ? 'Create user' : 'Get token' }}</button>
+                        <button class="btn secondary" type="button" @click="loadUser">User data</button>
+                        <button class="btn danger" type="button" @click="logout">Logout</button>
+                    </div>
+                    <div class="status" :class="{ error: authIsError }">{{ authStatus }}</div>
+                </form>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Bearer token</h2>
+                </div>
+                <div class="form-grid">
+                    <div class="token-box">{{ token || 'No token yet. Login to generate an access token.' }}</div>
+                    <div v-if="currentUser" class="token-box">
+                        User: {{ currentUser.name }}<br>
+                        Email: {{ currentUser.email }}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <main class="layout">
+            <section class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">{{ editingId ? 'Edit note' : 'Create note' }}</h2>
+                </div>
+                <form class="form-grid" @submit.prevent="saveNote">
+                    <label>
+                        Title
+                        <input v-model.trim="form.title" required maxlength="120" placeholder="Meeting summary">
+                    </label>
+
+                    <div class="row">
+                        <label>
+                            Author
+                            <input v-model.trim="form.author" required maxlength="80" placeholder="Your name">
+                        </label>
+                        <label>
+                            Classification
+                            <input v-model.trim="form.classification" required list="classification-list" placeholder="personal">
+                            <datalist id="classification-list">
+                                <option v-for="category in categories" :key="category.id" :value="category.name"></option>
+                            </datalist>
+                        </label>
+                    </div>
+
+                    <label>
+                        Date and time
+                        <input v-model="form.created_at" type="datetime-local">
+                    </label>
+
+                    <label>
+                        Body
+                        <textarea v-model.trim="form.body" required placeholder="Write the note content here."></textarea>
+                    </label>
+
+                    <div class="actions">
+                        <button class="btn" type="submit" :disabled="loading">{{ editingId ? 'Update note' : 'Create note' }}</button>
+                        <button v-if="editingId" class="btn secondary" type="button" @click="resetForm">Cancel</button>
+                        <button class="btn secondary" type="button" @click="loadNotes">Refresh</button>
+                    </div>
+                    <div class="status" :class="{ error: isError }">{{ status }}</div>
+                </form>
+            </section>
+
+            <section class="panel">
+                <div class="toolbar">
+                    <div>
+                        <h2 class="panel-title">Stored notes</h2>
+                        <div class="status">{{ notes.length }} note{{ notes.length === 1 ? '' : 's' }} returned by the API</div>
+                    </div>
+                    <select v-model="classificationFilter" @change="loadNotes">
+                        <option value="">All classifications</option>
+                        <option v-for="category in categories" :key="category.id" :value="category.name">{{ category.name }}</option>
+                    </select>
+                </div>
+
+                <div v-if="notes.length" class="notes">
+                    <article v-for="note in notes" :key="note.id" class="note">
+                        <div class="note-head">
+                            <div>
+                                <h3>{{ note.title }}</h3>
+                                <div class="meta">
+                                    <span>By {{ note.author }}</span>
+                                    <span>{{ note.created_at }}</span>
+                                    <span class="badge">{{ note.classification }}</span>
+                                </div>
+                            </div>
+                            <div class="note-actions">
+                                <button class="icon-btn" type="button" title="Edit note" @click="editNote(note)">Edit</button>
+                                <button class="icon-btn" type="button" title="Delete note" @click="deleteNote(note.id)">Del</button>
+                            </div>
+                        </div>
+                        <p class="body">{{ note.body }}</p>
+                    </article>
+                </div>
+                <div v-else class="empty">No notes found.</div>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
